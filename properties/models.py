@@ -1,5 +1,8 @@
 from django.db import models
 from django.contrib.auth import get_user_model
+from django.core.validators import MinValueValidator, MaxValueValidator
+from decimal import Decimal
+
 User = get_user_model()
 
 # Create your models here.
@@ -36,17 +39,38 @@ class RoomImage(models.Model):
     image = models.ImageField(upload_to="room_images/")
 
 class RoomPriceRule(models.Model):
-    room = models.ForeignKey(Room, on_delete=models.Case, related_name="price_rules")
+    class Mode(models.TextChoices):
+        ADD_FIXED_PER_GUEST = "ADD_FIXED_PER_GUEST", "add fixed per guest"
+        PERCENT = "PERCENT", "add percent from base"
+    name = models.CharField(max_length=255, blank=True, null=True)
+    room = models.ForeignKey(Room, on_delete=models.CASCADE, related_name="price_rules")
     start_date = models.DateField()
     end_date = models.DateField()
     weekday_only = models.BooleanField(default=False)
     weekend_only = models.BooleanField(default=False)
-    price = models.DecimalField(max_digits=10, decimal_places=2)
+    
+    mode = models.CharField(max_length=50, choices=Mode.choices, default=Mode.ADD_FIXED_PER_GUEST)
+    amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    percent = models.DecimalField(
+        max_digits=6, decimal_places=2, default=0,
+        validators=[MinValueValidator(-90), MaxValueValidator(300)],
+        help_text="10.00 = +10%, -15.00 = -15% "
+    )
+
+    def clean(self):
+        from django.core.exceptions import ValidationError
+        if self.weekday_only and self.weekend_only:
+            raise ValidationError("กรุณาเลือก อย่างเดียว")
+        if self.start_date and self.end_date and self.start_date > self.end_date:
+            raise ValidationError("end date ต้องอยู่หลัง start date")
 
 class RoomGuestPrice(models.Model):
     room = models.ForeignKey(Room, on_delete=models.CASCADE, related_name="guest_prices")
     guests = models.PositiveIntegerField()
     price = models.DecimalField(max_digits=10, decimal_places=2)
+
+    def __str__(self):
+        return f"{self.room} - {self.guests}"
 
 class RoomBlockDate(models.Model):
     room = models.ForeignKey(Room, on_delete=models.CASCADE, related_name="block_dates")

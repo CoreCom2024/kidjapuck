@@ -25,6 +25,13 @@ class RoomAdmin(admin.ModelAdmin):
     list_filter = ("is_active", "property__is_approved")
     inlines = [RoomImageInline]
 
-admin.site.register(RoomPriceRule)
-admin.site.register(RoomGuestPrice)
+@admin.register(RoomGuestPrice)
+class RoomGuestPriceAdmin(admin.ModelAdmin):
+    list_display = ("room", "guests", "price")
+
+@admin.register(RoomPriceRule)
+class RoomPriceRuleAdmin(admin.ModelAdmin):
+    list_display = ("name", "room")
+
+
 admin.site.register(RoomBlockDate)
