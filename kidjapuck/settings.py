@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'common',
     'partners',
     'properties',
+    'django.contrib.humanize',
 ]
 
 MIDDLEWARE = [

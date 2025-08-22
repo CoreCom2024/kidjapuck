@@ -33,5 +33,6 @@ class RoomGuestPriceAdmin(admin.ModelAdmin):
 class RoomPriceRuleAdmin(admin.ModelAdmin):
     list_display = ("name", "room")
 
-
-admin.site.register(RoomBlockDate)
+@admin.register(RoomBlockDate)
+class RoomBlockDateAdmin(admin.ModelAdmin):
+    list_display = ("room", "start_date", "end_date")
