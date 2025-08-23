@@ -99,7 +99,8 @@
         <div class="mb-3"></div>
         {% endif %}
 
-        <a class="btn btn-sm btn-primary" href="#">
+        <a class="btn btn-sm btn-primary"
+          href="{% url 'properties:room_detail' room.id %}?start_date={{ start_date|date:'Y-m-d' }}&end_date={{ end_date|date:'Y-m-d' }}&guests={{ guests }}">
           <i class="bi bi-box-arrow-up-right"></i> ดูรายละเอียด
         </a>
       </div>
