@@ -6,23 +6,76 @@
 {% block content %}
 <h1 class="h5 mb-3">ผลการค้นหา</h1>
 
-{% if start_date and end_date %}
-<p class="text-muted mb-4">
-  ช่วงเข้าพัก: {{ start_date|date:"j M Y" }} – {{ end_date|date:"j M Y" }}
-  {% if nights %}• {{ nights }} คืน{% endif %}
-  • ผู้เข้าพัก: {{ guests }} คน
-</p>
-{% endif %}
+{# ======== Filter Card ======== #}
+<form action="{% url 'properties:search' %}" method="get" class="mb-4">
+  <div class="card shadow-sm border-0">
+    <div class="card-body">
+      <div class="row g-3 align-items-end">
+        <div class="col-12 col-md-3">
+          <label for="start_date" class="form-label">เช็คอิน</label>
+          <input
+            type="date"
+            id="start_date"
+            name="start_date"
+            class="form-control"
+            value="{{ start_date|date:'Y-m-d' }}"
+            required>
+        </div>
+        <div class="col-12 col-md-3">
+          <label for="end_date" class="form-label">เช็คเอาต์</label>
+          <input
+            type="date"
+            id="end_date"
+            name="end_date"
+            class="form-control"
+            value="{{ end_date|date:'Y-m-d' }}"
+            required>
+        </div>
+        <div class="col-12 col-md-3">
+          <label for="guests" class="form-label">ผู้เข้าพัก</label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-people"></i></span>
+            <input
+              type="number"
+              id="guests"
+              name="guests"
+              class="form-control"
+              min="1"
+              step="1"
+              value="{{ guests|default:1 }}">
+          </div>
+        </div>
+        <div class="col-12 col-md-3 d-grid">
+          <button type="submit" class="btn btn-primary btn-lg">
+            <i class="bi bi-search"></i> อัปเดตการค้นหา
+          </button>
+        </div>
+      </div>
 
+      {% if start_date and end_date %}
+      <p class="text-muted small mt-3 mb-0">
+        <i class="bi bi-calendar-event"></i>
+        ช่วงเข้าพัก: {{ start_date|date:"j M Y" }} – {{ end_date|date:"j M Y" }}
+        {% if nights %} • {{ nights }} คืน{% endif %}
+        • ผู้เข้าพัก: {{ guests }} คน
+      </p>
+      {% endif %}
+    </div>
+  </div>
+</form>
+
+{# ======== Results Grid ======== #}
 <div class="row g-4">
   {% for room in rooms %}
   <div class="col-12 col-sm-6 col-lg-4">
     <div class="card h-100 shadow-sm border-0">
       <div class="position-relative">
+
         {% with img=room.images.first %}
           {% if img %}
             <div class="ratio ratio-16x9">
-              <img src="{{ img.image.url }}" alt="{{ room.name }}" class="img-fluid rounded-top object-fit-cover">
+              <img src="{{ img.image.url }}" alt="{{ room.name }}"
+                   class="img-fluid rounded-top object-fit-cover">
             </div>
           {% else %}
             <div class="ratio ratio-16x9 bg-light d-flex align-items-center justify-content-center rounded-top">
@@ -30,15 +83,25 @@
             </div>
           {% endif %}
         {% endwith %}
-        <span class="badge bg-dark position-absolute top-0 start-0 m-2">รองรับ {{ room.max_guests }} คน</span>
+
+        <span class="badge bg-dark rounded-pill position-absolute top-0 start-0 m-2">
+          <i class="bi bi-people-fill"></i> {{ room.max_guests }} คน
+        </span>
       </div>
 
       <div class="card-body">
         <h5 class="card-title mb-1">{{ room.property.name }} · {{ room.name }}</h5>
+        {% if room.property.address %}
         <p class="card-text text-muted small mb-3">
-          {{ room.property.address|default:"" }}
+          <i class="bi bi-geo-alt"></i> {{ room.property.address }}
         </p>
-        <a class="btn btn-sm btn-primary" href="#">ดูรายละเอียด</a>
+        {% else %}
+        <div class="mb-3"></div>
+        {% endif %}
+
+        <a class="btn btn-sm btn-primary" href="#">
+          <i class="bi bi-box-arrow-up-right"></i> ดูรายละเอียด
+        </a>
       </div>
 
       <div class="card-footer bg-white border-0 pt-0 pb-3">
@@ -47,7 +110,7 @@
             <div class="fw-semibold">
               ราคารวมสำหรับ {{ guests }} คน
               {% if nights %} ({{ nights }} คืน){% endif %}:
-              <span class="badge bg-primary ms-1">
+              <span class="ms-1 fs-5 fw-bold text-primary">
                 {{ room.total_price|floatformat:0|intcomma }} บาท
               </span>
             </div>
@@ -64,7 +127,30 @@
     </div>
   </div>
   {% empty %}
-    <div class="col-12"><p class="text-muted">ไม่พบห้องว่างตามช่วงวันที่เลือก</p></div>
+    <div class="col-12">
+      <div class="alert alert-light border text-muted">
+        ไม่พบห้องว่างตามช่วงวันที่เลือก
+      </div>
+    </div>
   {% endfor %}
 </div>
+
+{# ======== Helpers: clamp end_date >= start_date + 1 ======== #}
+<script>
+  (function () {
+    const start = document.getElementById('start_date');
+    const end   = document.getElementById('end_date');
+
+    function clampEndMin() {
+      if (!start.value) return;
+      const d = new Date(start.value);
+      d.setDate(d.getDate() + 1); // อย่างน้อย 1 คืน
+      const minStr = d.toISOString().slice(0, 10);
+      end.min = minStr;
+      if (end.value && end.value < minStr) end.value = minStr;
+    }
+    start.addEventListener('change', clampEndMin);
+    window.addEventListener('load', clampEndMin);
+  })();
+</script>
 {% endblock %}
