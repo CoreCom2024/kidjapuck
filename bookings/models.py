@@ -24,3 +24,8 @@ class Booking(models.Model):
 
     class Meta:
         ordering = ["-created_at"]
+
+    def save(self, *args, **kwargs):
+        if self.payment_slip and self.status == "pending_payment":
+            self.status = "await_partner_confirm"
+        super().save(*args, **kwargs)
