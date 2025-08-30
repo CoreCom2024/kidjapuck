@@ -1,0 +1,43 @@
+flowchart TD
+  %% Lanes
+  subgraph Customer["Customer"]
+    C1["Select room & dates"]
+    C2["Click Book"]
+    C3["Pay deposit & upload slip"]
+    C4["Receive SMS: awaiting partner"]
+    C5["Receive SMS: confirmed OR refunded"]
+  end
+
+  subgraph Partner["Partner"]
+    P1["Receive SMS: new booking"]
+    P2["Review booking"]
+    P3{"Confirm within X minutes?"}
+  end
+
+  subgraph System["System"]
+    S1["Create booking (status: awaiting_partner)"]
+    S2["Send SMS to Partner & Customer"]
+    S3["If confirmed -> status = confirmed"]
+    S4["If not confirmed at X -> place Voice Call"]
+    S5{"Confirmed within Grace (G)?"}
+    S6["Auto-cancel (status = cancelled)"]
+    S7["Refund deposit to customer"]
+    S8["Block room (hidden & unbookable)"]
+  end
+
+  subgraph Admin["Admin"]
+    A1["Review incident (partner no-confirm)"]
+    A2["Resolve root cause"]
+    A3["Unblock room (make visible/bookable)"]
+  end
+
+  %% Main path
+  C1 --> C2 --> C3 --> S1 --> S2
+  S2 --> C4
+  S2 --> P1 --> P2 --> P3
+
+  %% Decisions
+  P3 -- Yes (in time) --> S3 --> C5
+  P3 -- No (timeout X) --> S4 --> S5
+  S5 -- Yes (within G) --> S3 --> C5
+  S5 -- No --> S6 --> S7 --> S8 --> A1 --> A2 --> A3 --> C5
