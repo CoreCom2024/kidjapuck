@@ -6,8 +6,7 @@ User = get_user_model()
 # Create your models here.
 class Booking(models.Model):
     STATUS = [
-        ("pending_payment", "Pending Payment"),
-        ("await_partner_confirm", "Await Partner Confirm"),
+        ("awaiting_partner", "Awaiting Partner Confirmation"),
         ("confirmed", "Confirmed"),
         ("cancelled", "Cancelled"),
     ]
@@ -17,7 +16,7 @@ class Booking(models.Model):
     end_date = models.DateField()
     guests = models.PositiveIntegerField(default=1)
     total_price = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    status = models.CharField(max_length=50, choices=STATUS, default="pending_payment")
+    status = models.CharField(max_length=50, choices=STATUS, default="awaiting_partner")
     payment_slip = models.ImageField(upload_to="payment_slip/", blank=True, null=True)
     is_sms_sent = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -26,6 +25,6 @@ class Booking(models.Model):
         ordering = ["-created_at"]
 
     def save(self, *args, **kwargs):
-        if self.payment_slip and self.status == "pending_payment":
-            self.status = "await_partner_confirm"
+        if self.payment_slip and self.status == "awaiting_partner":
+            pass
         super().save(*args, **kwargs)
