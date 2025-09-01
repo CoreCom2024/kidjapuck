@@ -19,6 +19,7 @@ class Booking(models.Model):
     status = models.CharField(max_length=50, choices=STATUS, default="awaiting_partner")
     payment_slip = models.ImageField(upload_to="payment_slip/", blank=True, null=True)
     is_sms_sent = models.BooleanField(default=False)
+    is_sms_cancelled_sent = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
