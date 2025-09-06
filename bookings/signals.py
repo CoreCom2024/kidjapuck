@@ -6,6 +6,7 @@ from .notifications import (
     notify_customer_booking_confirmed,
     notify_partner_payment_received,
     notify_customer_booking_cancelled,
+    notify_customer_booking_awaiting,
 )
 
 @receiver(pre_save, sender=Booking, dispatch_uid="booking_cache_old_state_v1")
@@ -35,6 +36,7 @@ def react_after_save(sender, instance: Booking, created: bool, **kwargs):
     now_has_slip = bool(instance.payment_slip)
     if (not getattr(instance, "_old_has_slip", False)) and now_has_slip:
         notify_partner_payment_received(instance)
+        notify_customer_booking_awaiting(instance)
 
     # ถ้าสถานะไม่เปลี่ยน ไม่ต้องทำอะไรต่อ
     old_status = getattr(instance, "_old_status", None)
